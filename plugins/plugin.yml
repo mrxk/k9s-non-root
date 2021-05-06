@@ -1,0 +1,11 @@
+plugin:
+  local-shell:
+    shortCut: Ctrl-L
+    confirm: false
+    description: Local shell
+    scopes:
+      - all
+    command: bash
+    background: false
+    args:
+      - -i

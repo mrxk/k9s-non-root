@@ -1,0 +1,3 @@
+source ~/.vimrc
+au VimEnter * set nomod
+set nomodifiable readonly
