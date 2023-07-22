@@ -1,9 +1,9 @@
-FROM derailed/k9s
+FROM derailed/k9s:v0.27.4
 
-RUN apk add vim && \
-    apk add jq && \
-    apk add bash && \
-    adduser --disabled-password k9s k9s
+RUN apk add vim
+RUN apk add jq
+RUN apk add bash
+RUN adduser --disabled-password k9s k9s
 ENV EDITOR=vim
 COPY dotfiles/vimrc /home/k9s/.vimrc
 COPY dotfiles/vimrc.pager /home/k9s/.vimrc.pager
