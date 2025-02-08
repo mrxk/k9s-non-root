@@ -9,3 +9,14 @@ plugins:
     background: false
     args:
       - -i
+  json-log-viewer:
+    shortCut: Ctrl-J
+    confirm: false
+    description: JSON log viewer
+    scopes:
+      - containers
+    command: bash
+    background: false
+    args:
+      - -c
+      - kubectl logs -n "${NAMESPACE}" "${POD}" -c "${NAME}" > "/tmp/${NAMESPACE}.${POD}.${NAME}" && jlv "/tmp/${NAMESPACE}.${POD}.${NAME}"

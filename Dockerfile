@@ -1,4 +1,10 @@
+FROM golang:1.23-alpine3.21 AS builder
+
+RUN go install github.com/mrxk/jlv@latest
+
 FROM alpine:3.21.2
+
+COPY --from=builder /go/bin/jlv /usr/local/bin/jlv
 
 RUN apk update
 RUN apk add  vim && \
@@ -22,6 +28,7 @@ RUN curl -L https://github.com/derailed/k9s/releases/download/${K9S_VERSION}/k9s
 RUN rm -f /var/cache/apk/* && \
     rm -f /tmp/*
 
+ENV COLORTERM=truecolor
 ENV EDITOR=vim
 COPY dotfiles/vimrc /home/k9s/.vimrc
 COPY dotfiles/vimrc.pager /home/k9s/.vimrc.pager
