@@ -1,4 +1,4 @@
-FROM alpine:3.18.0
+FROM alpine:3.21.2
 
 RUN apk update
 RUN apk add  vim && \
@@ -8,12 +8,13 @@ RUN apk add  vim && \
     apk add curl && \
     adduser --disabled-password k9s k9s
 
-ARG TARGETPLATFORM
-ARG KUBECTL_VERSION="v1.25.2"
-RUN curl -L https://storage.googleapis.com/kubernetes-release/release/${KUBECTL_VERSION}/bin/${TARGETPLATFORM}/kubectl -o /usr/local/bin/kubectl && \
+ARG TARGETPLATFORM="amd64"
+ARG KUBECTL_VERSION="v1.32.1"
+RUN curl -L https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/${TARGETPLATFORM}/kubectl -o /usr/local/bin/kubectl && \
     chmod +x /usr/local/bin/kubectl
 
-RUN curl -L https://github.com/derailed/k9s/releases/download/v0.27.4/k9s_Linux_${TARGETPLATFORM#linux/}.tar.gz -o /tmp/k9s.tar.gz && \
+ARG K9S_VERSION="v0.32.7"
+RUN curl -L https://github.com/derailed/k9s/releases/download/${K9S_VERSION}/k9s_Linux_${TARGETPLATFORM#linux/}.tar.gz -o /tmp/k9s.tar.gz && \
     tar -C /tmp -xzf /tmp/k9s.tar.gz && \
     mv /tmp/k9s /usr/local/bin/k9s && \
     chmod +x /usr/local/bin/k9s
@@ -24,7 +25,7 @@ RUN rm -f /var/cache/apk/* && \
 ENV EDITOR=vim
 COPY dotfiles/vimrc /home/k9s/.vimrc
 COPY dotfiles/vimrc.pager /home/k9s/.vimrc.pager
-COPY plugins/plugin.yml /home/k9s/.config/k9s/plugin.yml
-RUN chown k9s:k9s /home/k9s/.* /home/k9s/.config/k9s /home/k9s/.config/k9s/.* /home/k9s/.config/k9s/*
+COPY plugins/plugins.yaml /home/k9s/.config/k9s/plugins.yaml
+RUN chown -R k9s:k9s /home/k9s/.*
 USER k9s
 ENTRYPOINT ["/usr/local/bin/k9s"]

@@ -1,4 +1,4 @@
-plugin:
+plugins:
   local-shell:
     shortCut: Ctrl-L
     confirm: false
