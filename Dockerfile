@@ -1,6 +1,6 @@
 FROM golang:1.23-alpine3.21 AS builder
 
-RUN go install github.com/mrxk/jlv@latest
+RUN go install github.com/mrxk/jlv@main
 
 FROM alpine:3.21.2
 
