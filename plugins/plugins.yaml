@@ -5,10 +5,11 @@ plugins:
     description: Local shell
     scopes:
       - all
-    command: bash
+    command: sh
     background: false
     args:
-      - -i
+      - -c
+      - PS1="${CLUSTER}:\w$ " bash -i
   json-log-viewer:
     shortCut: Ctrl-J
     confirm: false
@@ -19,4 +20,4 @@ plugins:
     background: false
     args:
       - -c
-      - kubectl logs -n "${NAMESPACE}" "${POD}" -c "${NAME}" > "/tmp/${NAMESPACE}.${POD}.${NAME}" && jlv "/tmp/${NAMESPACE}.${POD}.${NAME}"
+      - kubectl --context "${CONTEXT}" logs -n "${NAMESPACE}" "${POD}" -c "${NAME}" > "/tmp/${NAMESPACE}.${POD}.${NAME}" && jlv "/tmp/${NAMESPACE}.${POD}.${NAME}"
