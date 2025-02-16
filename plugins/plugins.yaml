@@ -20,4 +20,20 @@ plugins:
     background: false
     args:
       - -c
-      - kubectl --context "${CONTEXT}" logs -n "${NAMESPACE}" "${POD}" -c "${NAME}" > "/tmp/${NAMESPACE}.${POD}.${NAME}" && jlv "/tmp/${NAMESPACE}.${POD}.${NAME}"
+      - |
+        # Get the initial log content with timestamps
+        kubectl --context "${CONTEXT}" logs -n "${NAMESPACE}" "${POD}" -c "${NAME}" --timestamps > "/tmp/${NAMESPACE}.${POD}.${NAME}.ts"
+        # Get the latest timestamp
+        ts=$(tail -1 "/tmp/${NAMESPACE}.${POD}.${NAME}.ts" | cut -f1 -d' ')
+        # Remove timestamps from initial log
+        cut -f2- -d' ' "/tmp/${NAMESPACE}.${POD}.${NAME}.ts" > "/tmp/${NAMESPACE}.${POD}.${NAME}"
+        # Begin streaming the rest of the logs
+        kubectl --context "${CONTEXT}" logs -f -n "${NAMESPACE}" "${POD}" -c "${NAME}" --since-time "${ts}" >> "/tmp/${NAMESPACE}.${POD}.${NAME}" &
+        # Show log
+        jlv "/tmp/${NAMESPACE}.${POD}.${NAME}"
+        # Kill streamer
+        kill %1
+        # Clean up
+        rm -f "/tmp/${NAMESPACE}.${POD}.${NAME}"
+        rm -f "/tmp/${NAMESPACE}.${POD}.${NAME}.ts"
+        exit 0

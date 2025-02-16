@@ -23,5 +23,8 @@ The following plugins have been added to `k9s`.
 ## Run
 
 ```bash
-docker run --rm -it -v ${path_to_kubeconfig}:/home/k9s/.kube/config ghcr.io/mrxk/k9s-non-root:main
+docker run --init --rm -it -v ${path_to_kubeconfig}:/home/k9s/.kube/config ghcr.io/mrxk/k9s-non-root:main
 ```
+
+Note, without `--init`, the helper processes created by `jlv` will never be
+cleaned up.
