@@ -49,7 +49,7 @@ plugins:
         kubectl --context "${CONTEXT}" logs -n "${NAMESPACE}" "${POD_NAME}" -c "${CONTAINER_NAME}" --timestamps > "/tmp/${NAMESPACE}.${POD_NAME}.${CONTAINER_NAME}.ts"
         # Get the latest timestamp.
         ts=$(tail -1 "/tmp/${NAMESPACE}.${POD_NAME}.${CONTAINER_NAME}.ts" | cut -f1 -d' ')
-        ts="${ts%.*}Z"
+        ts="${ts%.*}"
         # Exit if no lines.
         if [ "${ts}" = "" ]
         then
@@ -57,9 +57,9 @@ plugins:
         fi
         # Kubectl --since-time has second granularity so remove lines from the
         # last second and remove timestamps from initial log
-        grep -v "^${ts}" "/tmp/${NAMESPACE}.${POD_NAME}.${CONTAINER_NAME}.ts" | cut -f2- -d' ' > "/tmp/${NAMESPACE}.${POD_NAME}.${CONTAINER_NAME}"
+        grep -v "^${ts}\." "/tmp/${NAMESPACE}.${POD_NAME}.${CONTAINER_NAME}.ts" | cut -f2- -d' ' > "/tmp/${NAMESPACE}.${POD_NAME}.${CONTAINER_NAME}"
         # Begin streaming the rest of the logs
-        kubectl --context "${CONTEXT}" logs -f -n "${NAMESPACE}" "${POD_NAME}" -c "${CONTAINER_NAME}" --since-time "${ts}" >> "/tmp/${NAMESPACE}.${POD_NAME}.${CONTAINER_NAME}" &
+        kubectl --context "${CONTEXT}" logs -f -n "${NAMESPACE}" "${POD_NAME}" -c "${CONTAINER_NAME}" --since-time "${ts}Z" >> "/tmp/${NAMESPACE}.${POD_NAME}.${CONTAINER_NAME}" &
         # Show log
         jlv "/tmp/${NAMESPACE}.${POD_NAME}.${CONTAINER_NAME}"
         # Kill streamer
