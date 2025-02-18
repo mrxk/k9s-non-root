@@ -23,28 +23,26 @@ plugins:
       - -c
       - |
         # Get the initial log content with timestamps
-        if [ "${POD}" = "" ]
+        clear
+        POD_NAME="${POD}"
+        CONTAINER_NAME="${NAME}"
+        if [ "${POD_NAME}" = "" ]
         then
-          kubectl --context "${CONTEXT}" logs -n "${NAMESPACE}" "${NAME}" --timestamps > "/tmp/${NAMESPACE}.${POD}.${NAME}.ts"
-        else
-          kubectl --context "${CONTEXT}" logs -n "${NAMESPACE}" "${POD}" -c "${NAME}" --timestamps > "/tmp/${NAMESPACE}.${POD}.${NAME}.ts"
+          POD_NAME="${CONTAINER_NAME}"
+          CONTAINER_NAME=$(gum choose --select-if-one $(kubectl get pods -n "${NAMESPACE}" "${CONTAINER_NAME}" -o json | jq -r '(.spec.containers[]?|.name), (.spec.initContainers[]?|.name)'))
         fi
+        kubectl --context "${CONTEXT}" logs -n "${NAMESPACE}" "${POD_NAME}" -c "${CONTAINER_NAME}" --timestamps > "/tmp/${NAMESPACE}.${POD_NAME}.${CONTAINER_NAME}.ts"
         # Get the latest timestamp
-        ts=$(tail -1 "/tmp/${NAMESPACE}.${POD}.${NAME}.ts" | cut -f1 -d' ')
+        ts=$(tail -1 "/tmp/${NAMESPACE}.${POD_NAME}.${CONTAINER_NAME}.ts" | cut -f1 -d' ')
         # Remove timestamps from initial log
-        cut -f2- -d' ' "/tmp/${NAMESPACE}.${POD}.${NAME}.ts" > "/tmp/${NAMESPACE}.${POD}.${NAME}"
+        cut -f2- -d' ' "/tmp/${NAMESPACE}.${POD_NAME}.${CONTAINER_NAME}.ts" > "/tmp/${NAMESPACE}.${POD_NAME}.${CONTAINER_NAME}"
         # Begin streaming the rest of the logs
-        if [ "${POD}" = "" ]
-        then
-          kubectl --context "${CONTEXT}" logs -f -n "${NAMESPACE}" "${NAME}" --since-time "${ts}" >> "/tmp/${NAMESPACE}.${POD}.${NAME}" &
-        else
-          kubectl --context "${CONTEXT}" logs -f -n "${NAMESPACE}" "${POD}" -c "${NAME}" --since-time "${ts}" >> "/tmp/${NAMESPACE}.${POD}.${NAME}" &
-        fi
+        kubectl --context "${CONTEXT}" logs -f -n "${NAMESPACE}" "${POD_NAME}" -c "${CONTAINER_NAME}" --since-time "${ts}" >> "/tmp/${NAMESPACE}.${POD_NAME}.${CONTAINER_NAME}" &
         # Show log
-        jlv "/tmp/${NAMESPACE}.${POD}.${NAME}"
+        jlv "/tmp/${NAMESPACE}.${POD_NAME}.${CONTAINER_NAME}"
         # Kill streamer
         kill %1
         # Clean up
-        rm -f "/tmp/${NAMESPACE}.${POD}.${NAME}"
-        rm -f "/tmp/${NAMESPACE}.${POD}.${NAME}.ts"
+        rm -f "/tmp/${NAMESPACE}.${POD_NAME}.${CONTAINER_NAME}"
+        rm -f "/tmp/${NAMESPACE}.${POD_NAME}.${CONTAINER_NAME}.ts"
         exit 0
