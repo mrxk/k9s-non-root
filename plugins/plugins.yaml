@@ -47,9 +47,14 @@ plugins:
           exit 0
         fi
         kubectl --context "${CONTEXT}" logs -n "${NAMESPACE}" "${POD_NAME}" -c "${CONTAINER_NAME}" --timestamps > "/tmp/${NAMESPACE}.${POD_NAME}.${CONTAINER_NAME}.ts"
-        # Get the latest timestamp
+        # Get the latest timestamp.
         ts=$(tail -1 "/tmp/${NAMESPACE}.${POD_NAME}.${CONTAINER_NAME}.ts" | cut -f1 -d' ')
         ts="${ts%.*}Z"
+        # Exit if no lines.
+        if [ "${ts}" = "" ]
+        then
+          exit 0
+        fi
         # Kubectl --since-time has second granularity so remove lines from the
         # last second and remove timestamps from initial log
         grep -v "^${ts}" "/tmp/${NAMESPACE}.${POD_NAME}.${CONTAINER_NAME}.ts" | cut -f2- -d' ' > "/tmp/${NAMESPACE}.${POD_NAME}.${CONTAINER_NAME}"
