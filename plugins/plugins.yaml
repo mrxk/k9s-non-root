@@ -9,7 +9,18 @@ plugins:
     background: false
     args:
       - -c
-      - PS1="${CLUSTER}:\w$ " bash -i
+      - |
+        PS1="${CLUSTER}:\w$ " \
+        NAMESPACE="${NAMESPACE}" \
+        NAME="${NAME}" \
+        CONTAINER="${CONTAINER}" \
+        FILTER="${FILTER}" \
+        CLUSTER="${CLUSTER}" \
+        CONTEXT="${CONTEXT}" \
+        USER="${USER}" \
+        GROUPS="${GROUPS}" \
+        POD="${POD}" \
+        bash -i
   json-log-viewer:
     shortCut: Ctrl-J
     confirm: false
@@ -31,11 +42,17 @@ plugins:
           POD_NAME="${CONTAINER_NAME}"
           CONTAINER_NAME=$(gum choose --select-if-one $(kubectl get pods -n "${NAMESPACE}" "${CONTAINER_NAME}" -o json | jq -r '(.spec.containers[]?|.name), (.spec.initContainers[]?|.name)'))
         fi
+        if [ "$CONTAINER_NAME" = "" ]
+        then
+          exit 0
+        fi
         kubectl --context "${CONTEXT}" logs -n "${NAMESPACE}" "${POD_NAME}" -c "${CONTAINER_NAME}" --timestamps > "/tmp/${NAMESPACE}.${POD_NAME}.${CONTAINER_NAME}.ts"
         # Get the latest timestamp
         ts=$(tail -1 "/tmp/${NAMESPACE}.${POD_NAME}.${CONTAINER_NAME}.ts" | cut -f1 -d' ')
-        # Remove timestamps from initial log
-        cut -f2- -d' ' "/tmp/${NAMESPACE}.${POD_NAME}.${CONTAINER_NAME}.ts" > "/tmp/${NAMESPACE}.${POD_NAME}.${CONTAINER_NAME}"
+        ts="${ts%.*}Z"
+        # Kubectl --since-time has second granularity so remove lines from the
+        # last second and remove timestamps from initial log
+        grep -v "^${ts}" "/tmp/${NAMESPACE}.${POD_NAME}.${CONTAINER_NAME}.ts" | cut -f2- -d' ' > "/tmp/${NAMESPACE}.${POD_NAME}.${CONTAINER_NAME}"
         # Begin streaming the rest of the logs
         kubectl --context "${CONTEXT}" logs -f -n "${NAMESPACE}" "${POD_NAME}" -c "${CONTAINER_NAME}" --since-time "${ts}" >> "/tmp/${NAMESPACE}.${POD_NAME}.${CONTAINER_NAME}" &
         # Show log
