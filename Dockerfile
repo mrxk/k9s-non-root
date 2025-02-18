@@ -1,10 +1,12 @@
 FROM golang:1.23-alpine3.21 AS builder
 
-RUN go install github.com/mrxk/jlv@v1.0.4
+RUN go install github.com/mrxk/jlv@v1.0.5
+RUN go install github.com/charmbracelet/gum@latest
 
 FROM alpine:3.21.2
 
 COPY --from=builder /go/bin/jlv /usr/local/bin/jlv
+COPY --from=builder /go/bin/gum /usr/local/bin/gum
 
 RUN apk update
 RUN apk add  vim && \

@@ -16,19 +16,30 @@ plugins:
     description: JSON log viewer
     scopes:
       - containers
+      - pods
     command: bash
     background: false
     args:
       - -c
       - |
         # Get the initial log content with timestamps
-        kubectl --context "${CONTEXT}" logs -n "${NAMESPACE}" "${POD}" -c "${NAME}" --timestamps > "/tmp/${NAMESPACE}.${POD}.${NAME}.ts"
+        if [ "${POD}" = "" ]
+        then
+          kubectl --context "${CONTEXT}" logs -n "${NAMESPACE}" "${NAME}" --timestamps > "/tmp/${NAMESPACE}.${POD}.${NAME}.ts"
+        else
+          kubectl --context "${CONTEXT}" logs -n "${NAMESPACE}" "${POD}" -c "${NAME}" --timestamps > "/tmp/${NAMESPACE}.${POD}.${NAME}.ts"
+        fi
         # Get the latest timestamp
         ts=$(tail -1 "/tmp/${NAMESPACE}.${POD}.${NAME}.ts" | cut -f1 -d' ')
         # Remove timestamps from initial log
         cut -f2- -d' ' "/tmp/${NAMESPACE}.${POD}.${NAME}.ts" > "/tmp/${NAMESPACE}.${POD}.${NAME}"
         # Begin streaming the rest of the logs
-        kubectl --context "${CONTEXT}" logs -f -n "${NAMESPACE}" "${POD}" -c "${NAME}" --since-time "${ts}" >> "/tmp/${NAMESPACE}.${POD}.${NAME}" &
+        if [ "${POD}" = "" ]
+        then
+          kubectl --context "${CONTEXT}" logs -f -n "${NAMESPACE}" "${NAME}" --since-time "${ts}" >> "/tmp/${NAMESPACE}.${POD}.${NAME}" &
+        else
+          kubectl --context "${CONTEXT}" logs -f -n "${NAMESPACE}" "${POD}" -c "${NAME}" --since-time "${ts}" >> "/tmp/${NAMESPACE}.${POD}.${NAME}" &
+        fi
         # Show log
         jlv "/tmp/${NAMESPACE}.${POD}.${NAME}"
         # Kill streamer
