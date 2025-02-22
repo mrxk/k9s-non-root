@@ -1,6 +1,6 @@
 FROM golang:1.23-alpine3.21 AS builder
 
-RUN go install github.com/mrxk/jlv@v1.0.7
+RUN go install github.com/mrxk/jlv@v1.0.8
 RUN go install github.com/charmbracelet/gum@latest
 
 FROM alpine:3.21.2
