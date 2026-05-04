@@ -28,13 +28,19 @@ RUN curl -L https://github.com/derailed/k9s/releases/download/${K9S_VERSION}/k9s
     mv /tmp/k9s /usr/local/bin/k9s && \
     chmod +x /usr/local/bin/k9s
 
+ARG KUBELOGIN_VERSION="v0.2.17"
+RUN curl -L https://github.com/Azure/kubelogin/releases/download/${KUBELOGIN_VERSION}/kubelogin-linux-${TARGETPLATFORM#linux/}.zip -o /tmp/kubelogin.zip && \
+    unzip -d /tmp /tmp/kubelogin.zip && \
+    mv /tmp/bin/linux_${TARGETPLATFORM}/kubelogin /usr/local/bin/kubelogin && \
+    chmod +x /usr/local/bin/kubelogin
+
 RUN apk add --no-cache python3 py3-pip
 RUN python3 -m venv /.venv && \
     source /.venv/bin/activate && \
     pip3 install azure-cli
 
-RUN rm -f /var/cache/apk/* && \
-    rm -f /tmp/*
+RUN rm -rf /var/cache/apk/* && \
+    rm -rf /tmp/*
 
 ENV COLORTERM=truecolor
 ENV EDITOR=vim
