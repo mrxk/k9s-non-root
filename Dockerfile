@@ -1,31 +1,37 @@
-FROM golang:1.23-alpine3.21 AS builder
+FROM golang:1.26-alpine3.23 AS builder
 
 RUN go install github.com/mrxk/jlv@v1.0.10
 RUN go install github.com/charmbracelet/gum@latest
 
-FROM alpine:3.21.2
+FROM alpine:3.23
 
 COPY --from=builder /go/bin/jlv /usr/local/bin/jlv
 COPY --from=builder /go/bin/gum /usr/local/bin/gum
 
 RUN apk update
-RUN apk add  vim && \
-    apk add jq && \
-    apk add bash && \
-    apk add ca-certificates && \
-    apk add curl && \
-    adduser --disabled-password k9s k9s
+RUN apk add --no-cache \
+    vim \
+    jq \
+    bash \
+    ca-certificates \
+    curl
+RUN adduser --disabled-password k9s k9s
 
 ARG TARGETPLATFORM="amd64"
-ARG KUBECTL_VERSION="v1.32.1"
+ARG KUBECTL_VERSION="v1.36.0"
 RUN curl -L https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/${TARGETPLATFORM}/kubectl -o /usr/local/bin/kubectl && \
     chmod +x /usr/local/bin/kubectl
 
-ARG K9S_VERSION="v0.32.7"
+ARG K9S_VERSION="v0.50.18"
 RUN curl -L https://github.com/derailed/k9s/releases/download/${K9S_VERSION}/k9s_Linux_${TARGETPLATFORM#linux/}.tar.gz -o /tmp/k9s.tar.gz && \
     tar -C /tmp -xzf /tmp/k9s.tar.gz && \
     mv /tmp/k9s /usr/local/bin/k9s && \
     chmod +x /usr/local/bin/k9s
+
+RUN apk add --no-cache python3 py3-pip
+RUN python3 -m venv /.venv && \
+    source /.venv/bin/activate && \
+    pip3 install azure-cli
 
 RUN rm -f /var/cache/apk/* && \
     rm -f /tmp/*
@@ -35,6 +41,8 @@ ENV EDITOR=vim
 COPY dotfiles/vimrc /home/k9s/.vimrc
 COPY dotfiles/vimrc.pager /home/k9s/.vimrc.pager
 COPY plugins/plugins.yaml /home/k9s/.config/k9s/plugins.yaml
-RUN chown -R k9s:k9s /home/k9s/.*
+COPY entrypoint.sh /entrypoint.sh
+RUN chown -R k9s:k9s /home/k9s/.* /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 USER k9s
-ENTRYPOINT ["/usr/local/bin/k9s"]
+ENTRYPOINT ["/entrypoint.sh"]
